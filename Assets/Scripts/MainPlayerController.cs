@@ -9,19 +9,22 @@ public class MainPlayerController : MonoBehaviour
 	public Trajectory Trajectory;
 	public GameObject Gun;
 	public GameObject Barrel;
-	public GameObject BarrelPivot;
 	public Transform RocketPrefab;
 	public Crosshair Crosshair;
+	public float BodyRotationSpeed = 80f;
 
 	private Vector3 movement;
 	private float mouseRotationX = 0.0f;
 	private float mouseRotationY = 0.0f;
-	private Quaternion originalBodyRotation;
 	private Quaternion originalGunRotation;
 	private Quaternion originalCameraAngle;
 	private RaycastHit hit;
 	private bool allowShooting = false;
 	private float prevRotationX = 0;
+	private const float MAX_BARREL_ANGLE_X = 20f;
+	private const float MIN_BARREL_ANGLE_X = -20f;
+	private const float MAX_BARREL_ANGLE_Y = 80f;
+	private const float MIN_BARREL_ANGLE_Y = 0f;
 
 	void Awake()
 	{
@@ -32,9 +35,9 @@ public class MainPlayerController : MonoBehaviour
 
 	void Start()
 	{
-		originalBodyRotation = transform.localRotation;
 		originalGunRotation = Gun.transform.localRotation;
 		originalCameraAngle = Camera.main.transform.localRotation;
+		Screen.lockCursor = true;
 	}
 
 	void Update() 
@@ -65,11 +68,11 @@ public class MainPlayerController : MonoBehaviour
 		// Mouse Rotation
 		mouseRotationX += Input.GetAxis("Mouse X") * MouseSensitivity;
 		mouseRotationY += Input.GetAxis("Mouse Y") * MouseSensitivity;
-		mouseRotationX = ClampAngle(mouseRotationX, -20.0f, 20.0f);
-		mouseRotationY = ClampAngle(mouseRotationY, -20.0f, 20.0f);
-		if (prevRotationX == -20f || prevRotationX == 20f && prevRotationX == mouseRotationX)
+		mouseRotationX = ClampAngle(mouseRotationX, MIN_BARREL_ANGLE_X, MAX_BARREL_ANGLE_X);
+		mouseRotationY = ClampAngle(mouseRotationY, MIN_BARREL_ANGLE_X, MAX_BARREL_ANGLE_X);
+		if (prevRotationX == MIN_BARREL_ANGLE_X || prevRotationX == MAX_BARREL_ANGLE_X && prevRotationX == mouseRotationX)
 		{
-			var speed = prevRotationX == -20f? -40f : 40f;
+			var speed = prevRotationX == MIN_BARREL_ANGLE_X ? -1 * BodyRotationSpeed : BodyRotationSpeed;
 			transform.RotateAround(transform.position, Vector3.up, speed * Time.deltaTime);
 		}
 		prevRotationX = mouseRotationX;
@@ -77,7 +80,7 @@ public class MainPlayerController : MonoBehaviour
 		Quaternion quatY = Quaternion.AngleAxis(mouseRotationY, Vector3.left);
 		Gun.transform.localRotation = originalGunRotation * quatX * quatY;
 		Camera.main.transform.localRotation = originalCameraAngle * quatY;
-		if (Input.GetMouseButtonDown(1))
+		if (Input.GetMouseButtonDown(0))
 			Shoot();
 	}
 
@@ -103,6 +106,7 @@ public class MainPlayerController : MonoBehaviour
 		if (!allowShooting)
 			return;
 		Rocket rocket = (GameObject.Instantiate(RocketPrefab, Barrel.transform.position, Quaternion.identity) as Transform).GetComponent<Rocket>();
+		rocket.MainPlayerController = this;
 		rocket.Fly(hit.point);
 	}
 

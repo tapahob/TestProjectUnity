@@ -8,6 +8,8 @@ public class Trajectory : MonoBehaviour
 	public LineRenderer LineRenderer;
 	public int SegmentsCount = 20;
 
+
+
 	void Start() 
 	{
 		LineRenderer.SetVertexCount(SegmentsCount);

@@ -3,39 +3,36 @@ using System.Collections;
 
 public class Rocket : MonoBehaviour 
 {
-	public float flightSpeed = 3.0f;
-	public Light lightSource;
-
-	private Vector3 startPos;
-	private Vector3 enemyPos;
-	private float timer = 0.0f;
-	private float apexPoint;
+	public Light LightSource;
+	public Rigidbody RigidBody;
+	public MainPlayerController MainPlayerController;
 
 	public void Fly(Vector3 enemyPosition)
 	{
-		enemyPos = enemyPosition;
-		startPos = transform.position;
-		apexPoint = (startPos-enemyPos).magnitude / 2;
+		float gunAngle = MainPlayerController.Gun.transform.localEulerAngles.x;
+		RigidBody.velocity = BallisticVelocity(enemyPosition, gunAngle);
 	}
 
-	void Update () 
+	void OnCollisionEnter(Collision collision)
 	{
-		timer += Time.deltaTime;
+		Detonate();
+	}
 
-		if (timer > flightSpeed)
-		{
-			Detonate();
-			return;
-		}
-		Vector3 newPosition = Vector3.Lerp(startPos, enemyPos, timer / flightSpeed);
-		newPosition.y += Mathf.Sin(timer / flightSpeed * Mathf.PI) * apexPoint;
-		transform.position = newPosition;
+	Vector3 BallisticVelocity(Vector3 target, float angle)
+	{
+		var dir = target - transform.position;
+		var h = dir.y;
+		dir.y = 0;
+		var dist = dir.magnitude;
+		var a = angle * Mathf.Deg2Rad;
+		dir.y = dist * Mathf.Tan(a);
+		dist += h / Mathf.Tan(a);
+		var vel = Mathf.Sqrt(dist * Physics.gravity.magnitude / Mathf.Sin(2*a));
+		return vel * dir.normalized;
 	}
 
 	void Detonate()
 	{
-		lightSource.enabled = false;
-
-		//Destroy(this.gameObject);
+		LightSource.enabled = false;
 	}
 }
