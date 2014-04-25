@@ -17,9 +17,11 @@ public class MainPlayerController : MonoBehaviour
 	private float mouseRotationX = 0.0f;
 	private float mouseRotationY = 0.0f;
 	private Quaternion originalBodyRotation;
+	private Quaternion originalGunRotation;
 	private Quaternion originalCameraAngle;
 	private RaycastHit hit;
 	private bool allowShooting = false;
+	private float prevRotationX = 0;
 
 	void Awake()
 	{
@@ -31,6 +33,7 @@ public class MainPlayerController : MonoBehaviour
 	void Start()
 	{
 		originalBodyRotation = transform.localRotation;
+		originalGunRotation = Gun.transform.localRotation;
 		originalCameraAngle = Camera.main.transform.localRotation;
 	}
 
@@ -62,13 +65,18 @@ public class MainPlayerController : MonoBehaviour
 		// Mouse Rotation
 		mouseRotationX += Input.GetAxis("Mouse X") * MouseSensitivity;
 		mouseRotationY += Input.GetAxis("Mouse Y") * MouseSensitivity;
-		mouseRotationX = ClampAngle(mouseRotationX, -360.0f, 360.0f);
+		mouseRotationX = ClampAngle(mouseRotationX, -20.0f, 20.0f);
 		mouseRotationY = ClampAngle(mouseRotationY, -20.0f, 20.0f);
-		Quaternion quatX = Quaternion.AngleAxis(mouseRotationX, Vector3.up);
+		if (prevRotationX == -20f || prevRotationX == 20f && prevRotationX == mouseRotationX)
+		{
+			var speed = prevRotationX == -20f? -40f : 40f;
+			transform.RotateAround(transform.position, Vector3.up, speed * Time.deltaTime);
+		}
+		prevRotationX = mouseRotationX;
+		Quaternion quatX = Quaternion.AngleAxis(mouseRotationX, Vector3.back);
 		Quaternion quatY = Quaternion.AngleAxis(mouseRotationY, Vector3.left);
-		transform.localRotation = originalBodyRotation * quatX;
+		Gun.transform.localRotation = originalGunRotation * quatX * quatY;
 		Camera.main.transform.localRotation = originalCameraAngle * quatY;
-
 		if (Input.GetMouseButtonDown(1))
 			Shoot();
 	}
